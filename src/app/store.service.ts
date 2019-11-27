@@ -9,7 +9,7 @@ import Swal from 'sweetalert2';
 *  @description :: Common service to send any AJAX requests.
 */
 
-const apiURL = 'https://vessel-predictorbackend.herokuapp.com';
+const apiURL = 'https://vessel-predictor-backend.herokuapp.com';
 
 var httpOptions = {
   headers: new HttpHeaders({ 'enctype': 'multipart/form-data' })
