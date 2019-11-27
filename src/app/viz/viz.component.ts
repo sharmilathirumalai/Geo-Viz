@@ -167,6 +167,11 @@ export class VizComponent implements OnInit {
           mouseover: ((e) => {
             var layer = e.target;
 
+            var popup = L.popup()
+              .setLatLng(e.latlng)
+              .setContent('<p>Coordinates:' + e.latlng + '</p><p>Density: ' + feature.properties.density + '</p>')
+              .openOn(map);
+
             layer.setStyle({
               weight: 2,
               fillOpacity: 1
