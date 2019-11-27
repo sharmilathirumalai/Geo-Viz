@@ -2,3 +2,63 @@
   height: 1000px;
   width: 100%;
 }
+
+.top-band {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+  -webkit-transition: all 0.3s ease-in;
+  transition: all 0.3s ease-in;
+  z-index: 2000;
+  background-color: #F8F9FD;
+
+  .btn-primary {
+    border-radius: 40px;
+    outline: none;
+    padding: 8px 41px;
+    margin-top: 24px;
+  }
+}
+
+nav {
+  padding: 15px 0;
+}
+
+.form-control {
+  padding: 10px 12px;
+  outline: none;
+  width: 200px;
+  border-color: #e8e8e8;
+  background-color: #fff !important;
+  border-bottom-color: #8495C2;
+  font-size: 12px;
+  border-radius: 0;
+  -webkit-transition: all 0.4s ease-in;
+  transition: all 0.4s ease-in;
+
+}
+
+.form-group {
+  label {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: .5rem;
+  }
+}
+
+.wrapper {
+  position: relative;
+  top: 100px;
+  background-color: #F8F9FD;
+}
+
+.btn-primary {
+  font-size: 14px;
+  font-weight: bold;
+  background-color: #343957;
+  border-color: #343957;
+  -webkit-transition: all 0.3s ease-in;
+  transition: all 0.3s ease-in;
+}
