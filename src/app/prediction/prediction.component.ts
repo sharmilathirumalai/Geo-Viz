@@ -29,7 +29,7 @@ export class PredictionComponent implements OnInit {
 
     for (var i = 0; i < polygons.result.length; i++) {
       let polygon = polygons.result[i];
-      if (polygon.value > 0) {
+      if (polygon.predicted_value > 0) {
 
         let properties = { density: polygon.value };
         let geometry = {
