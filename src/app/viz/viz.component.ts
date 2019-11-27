@@ -14,10 +14,15 @@ declare let L;
 export class VizComponent implements OnInit {
 
   geojsonData: any;
+  myChart: any;
   map: any;
   year: number;
   week: number;
   median: number;
+  medianPer: number;
+  lineTrend: any;
+  selectedDensity: any;
+  showLineChart = false;
   max = 0;
 
   constructor(private store: StoreService) {
@@ -37,11 +42,30 @@ export class VizComponent implements OnInit {
           "type": "Polygon",
           "coordinates": [[[polygon.lon1, polygon.lat1], [polygon.lon2, polygon.lat2], [polygon.lon3, polygon.lat3], [polygon.lon4, polygon.lat4]]]
         }
+
+        var availableMonth = [];
+        let trendValue = [];
+        var monthList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        monthList.forEach((month) => {
+          if (polygon[month.toLowerCase()]) {
+            availableMonth.push(month)
+            trendValue.push(polygon[month.toLowerCase()]);
+          }
+        });
+
+        let montlyTrend = {
+          labels: availableMonth,
+          data: trendValue
+        }
+
         features.push({
           "type": "Feature",
           properties,
-          geometry
+          geometry,
+          montlyTrend
         });
+
 
         this.max = this.max < polygon.value ? polygon.value : this.max;
 
@@ -58,22 +82,37 @@ export class VizComponent implements OnInit {
   }
 
   computeMedian(values) {
-    values.sort((a, b) => a - b);
-    let lowMiddle = Math.floor((values.length - 1) / 2);
-    let highMiddle = Math.ceil((values.length - 1) / 2);
-    this.median = (values[lowMiddle] + values[highMiddle]) / 2;
+    let median;
+
+    values.sort(function(a, b) {
+      return a - b;
+    });
+
+    let half = Math.floor(values.length / 2);
+
+    if (values.length % 2)
+      median = values[half];
+
+    median = (values[half - 1] + values[half]) / 2.0;
+
+    this.median = median;
+    let medianIndex = 0;
+    values.forEach((value, index) => {
+      if (value >= median) {
+        medianIndex = index;
+      }
+    });
+
+    if (medianIndex == 0) {
+      this.medianPer = 100;
+    } else {
+      this.medianPer = (values.length / (medianIndex)) * 10;
+    }
+
   }
 
   ngOnInit() {
-
-    var maxBounds = [
-      [80.499550, -167.276413], //Southwest
-      [-5.162102, -2.233040]  //Northeast
-    ];
-
-    this.map = L.map('mapid', {
-      'maxBounds': maxBounds
-    }).setView([-104.4480126008, 50.7736985613], 4);
+    this.map = L.map('mapid').setView([32.00118, -87.359296], 4);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -83,8 +122,9 @@ export class VizComponent implements OnInit {
 
 
     const formData = new FormData();
-    formData.append('past_year', $("#year").val());
-    formData.append('past_week', $("#week").val());
+    let dateStr = $("#date").val();
+    formData.append('past_year', dateStr.substring(0, 4));
+    formData.append('past_week', dateStr.substring(dateStr.length - 2, dateStr.length));
 
     this.store.post('/visualise_past_data', formData).subscribe((res) => {
 
@@ -98,6 +138,7 @@ export class VizComponent implements OnInit {
     var info = L.control();
 
     info.onAdd = function(map) {
+      $(".info").remove();
       this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
       this.update();
       return this._div;
@@ -105,7 +146,7 @@ export class VizComponent implements OnInit {
 
     // method that we will use to update the control based on feature properties passed
     info.update = function(props) {
-      this._div.innerHTML = '<h6>Fishing Vessel Density Range</h6><div><canvas id="doughchartContainer" style="height: 170px; width: 210px;"></canvas></div>';
+      this._div.innerHTML = '<h6>Fishing Vessel Density Range</h6><div class="chartreport"></div>';
     };
 
     info.addTo(map);
@@ -114,58 +155,76 @@ export class VizComponent implements OnInit {
 
     geojsonLayer = L.choropleth(this.geojsonData, {
       valueProperty: 'density', // which property in the features to use
-      scale: ['white', 'red'], // chroma.js scale - include as many as you like
-      steps: 5, // number of breaks or steps in range
+      scale: ['white', 'blue'], // chroma.js scale - include as many as you like
       mode: 'q', // q for quantile, e for equidistant, k for k-means
       style: {
         color: '#fff', // border color
-        weight: 2,
-        fillOpacity: 0.8
+        weight: 0,
+        fillOpacity: 0.9
       },
-      onEachFeature: onEachFeature
+      onEachFeature: ((feature, layer) => {
+        layer.on({
+          mouseover: ((e) => {
+            var layer = e.target;
+
+            layer.setStyle({
+              weight: 2,
+              fillOpacity: 1
+            });
+
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+              layer.bringToFront();
+            }
+          }),
+          mouseout: ((e) => {
+            geojsonLayer.resetStyle(e.target);
+          }),
+          click: ((e) => {
+            this.showLineChart = false;
+            this.selectedDensity = feature.properties.density;
+            this.lineTrend = feature.montlyTrend;
+
+            setTimeout(() => {
+              this.showLineChart = true;
+              $('html, body').animate({
+                scrollTop: $("#scroll-to").offset().top
+              }, 1000);
+              console.log(feature.montlyTrend)
+            }, 300);
+          })
+        });
+      })
     }).addTo(map)
 
-    info.update({ median: this.median });
+    if (this.myChart == undefined) {
+      info.update();
+    }
+
 
     this.drawDoughnut();
-
-    function onEachFeature(feature, layer) {
-      layer.on({
-        mouseover: ((e) => {
-          var layer = e.target;
-
-          layer.setStyle({
-            weight: 2,
-            color: '#aaa',
-            dashArray: '',
-            fillOpacity: 0.8
-          });
-
-          if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-            layer.bringToFront();
-          }
-        }),
-        mouseout: ((e) => {
-          geojsonLayer.resetStyle(e.target);
-        })
-      });
-      layer.bindPopup('Density: ' + feature.properties.density);
-    }
   }
 
   drawDoughnut() {
+    $("canvas#doughchartContainer").remove();
+
+    $("div.chartreport").append('<canvas id="doughchartContainer" style="height: 170px; width: 210px;"></canvas>');
+
     var ctx = $("#doughchartContainer");
-    let median = this.median;
-    let max = this.max;
+    let per = this.medianPer;
     let doughColor = '#ffc107';
 
-    if ((median / max) < 25) {
+    if (per < 25) {
       doughColor = "#28a745";
     }
-    else if ((median / max) > 70) {
+    else if (per > 70) {
       doughColor = "#dc3545";
     }
-    var myPieChart = new Chart(ctx, {
+
+    if (this.myChart != undefined) {
+      this.myChart.destroy();
+    }
+
+    this.myChart = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: ['Median', 'Max'],
@@ -179,6 +238,21 @@ export class VizComponent implements OnInit {
           borderWidth: 5
         }]
       }
+    });
+  }
+
+  submitQuery(e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    let dateStr = $("#date").val();
+    formData.append('past_year', dateStr.substring(0, 4));
+    formData.append('past_week', dateStr.substring(dateStr.length - 2, dateStr.length));
+
+    this.store.post('/visualise_past_data', formData).subscribe((res) => {
+
+      this.geojsonData = this.convertTOGeoJSON(res);
+      this.initMap();
     });
   }
 

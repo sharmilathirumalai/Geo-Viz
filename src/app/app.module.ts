@@ -5,12 +5,15 @@ import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { VizComponent } from './viz/viz.component';
-import { DoughnutChartComponent } from './doughnut-chart/doughnut-chart.component';
+import { LineChartComponent } from './line-chart/line-chart.component';
+import { PredictionComponent } from './prediction/prediction.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    VizComponent
+    VizComponent,
+    LineChartComponent,
+    PredictionComponent
   ],
   imports: [
     BrowserModule,
