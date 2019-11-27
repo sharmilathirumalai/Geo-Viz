@@ -31,7 +31,7 @@ export class PredictionComponent implements OnInit {
       let polygon = polygons.result[i];
       if (polygon.predicted_value > 0) {
 
-        let properties = { density: polygon.value };
+        let properties = { density: polygon.predicted_value };
         let geometry = {
           "type": "Polygon",
           "coordinates": [[[polygon.lon1, polygon.lat1], [polygon.lon2, polygon.lat2], [polygon.lon3, polygon.lat3], [polygon.lon4, polygon.lat4]]]
