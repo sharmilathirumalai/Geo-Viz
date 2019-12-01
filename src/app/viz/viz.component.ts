@@ -22,6 +22,7 @@ export class VizComponent implements OnInit {
   medianPer: number;
   lineTrend: any;
   selectedDensity: any;
+  selectedCoords: any;
   showLineChart = false;
   max = 0;
 
@@ -187,6 +188,7 @@ export class VizComponent implements OnInit {
           click: ((e) => {
             this.showLineChart = false;
             this.selectedDensity = feature.properties.density;
+            this.selectedCoords = e.latlng;
             this.lineTrend = feature.montlyTrend;
 
             setTimeout(() => {
